@@ -409,6 +409,12 @@ yarn = """<?xml version="1.0"?>
   </property>
 
   <property>
+    <name>yarn.nodemanager.vmem-pmem-ratio</name>
+    <value>20.0</value>
+  </property>
+
+
+  <property>
    <name>mapreduce.job.hdfs-servers</name>
    <value>${fs.default.name}</value>
  </property>
@@ -421,6 +427,12 @@ yarn = """<?xml version="1.0"?>
   literal string "local" or a host:port for NDFS.</description>
     <final>true</final>
   </property>
+
+<property>
+	<name>yarn.nodemanager.process-kill-wait.ms</name>
+	<value>3600000</value>
+</property>
+
 </configuration>
 """ % {'resourcemanager' : resourcemanager, 'hadoop_tmp':distribute('tmp'), 'hadoop_nm_local':distribute('tmp/nm-local'), 'hadoop_nm_log':distribute('tmp/nm-logs')}
 
