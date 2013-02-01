@@ -5,7 +5,7 @@ from glob import glob
 namenode = hostname
 resourcemanager = hostname
 
-volumes = glob("/tmp/grid/[0-9]*/")
+volumes = glob("/grid/[0-9]*/")
 
 def distribute(path):
 	return ",".join(["%s/%s" % (v,path) for v in volumes])
@@ -43,7 +43,7 @@ core = """
 </property>
 <property>
 	<name>dfs.namenode.name.dir</name>
-	<value>%(hadoop_name)s</name>
+	<value>%(hadoop_name)s</value>
 </property>
 
   <property>
