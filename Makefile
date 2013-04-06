@@ -1,20 +1,29 @@
 
 JDK_URL=http://download.oracle.com/otn-pub/java/jdk/6u38-b05/jdk-6u38-linux-x64.bin
 JDK_BIN=$(shell basename $(JDK_URL))
+YUM=$(shell which yum)
 
 $(JDK_BIN): 
 	wget -O $(JDK_BIN) -c --no-cookies --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com" $(JDK_URL) 
 
 jdk: $(JDK_BIN)
+	mkdir -p /usr/lib/jvm/
 	test -d /usr/lib/jvm/jdk6 || (yes | bash -x ./$(JDK_BIN) && mv jdk1.6.0_38 /usr/lib/jvm/jdk6)
 	echo "export JAVA_HOME=/usr/lib/jvm/jdk6/"> /etc/profile.d/java.sh 
 
 epel:
+ifneq ($(YUM),)
 	test -f /etc/yum.repos.d/epel.repo || rpm -ivh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
 	yum makecache
+endif
 
 git: epel
-	yum -y install git-core gcc gcc-c++ pdsh 
+ifneq ($(YUM),)
+	yum -y install git-core 
+	yum -y install gcc gcc-c++ 
+	yum -y install pdsh
+	yum -y install ant
+endif
 
 maven: jdk
 	wget -c http://apache.techartifact.com/mirror/maven/maven-3/3.0.4/binaries/apache-maven-3.0.4-bin.tar.gz
@@ -36,7 +45,7 @@ hadoop: git maven protobuf
 	cd hadoop/; git branch branch-2 --track origin/branch-2; \
 	git checkout branch-2; \
 	. /etc/profile; \
-	mvn package -Pdist -DskipTests;
+	mvn package -Pnative -Pdist -DskipTests;
 
 
 hadoop/hadoop-dist/target/: 
@@ -64,7 +73,7 @@ propogate: /opt/hadoop slaves /root/.ssh/id_rsa
 	done
 
 start: propogate
-	test -d /grid/0/tmp/dfs/name/current/ || /opt/hadoop/bin/hdfs namenode -format
+	test -d /grid/*/tmp/dfs/name/current/ || /opt/hadoop/bin/hdfs namenode -format
 	/opt/hadoop/sbin/hadoop-daemon.sh start namenode
 	/opt/hadoop/sbin/yarn-daemon.sh start resourcemanager
 	/opt/hadoop/sbin/mr-jobhistory-daemon.sh start historyserver
@@ -76,3 +85,15 @@ stop:
 	/opt/hadoop/sbin/mr-jobhistory-daemon.sh stop historyserver
 	pdsh -w $$(tr \\n , < slaves) '/opt/hadoop/sbin/hadoop-daemon.sh stop datanode && /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
 	
+
+rm-restart:
+	/opt/hadoop/sbin/yarn-daemon.sh stop resourcemanager
+	/opt/hadoop/sbin/yarn-daemon.sh start resourcemanager
+
+nm-restart:
+	pdsh -w $$(tr \\n , < slaves) '/opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
+	pdsh -w $$(tr \\n , < slaves) '/opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
+
+restart-slaves:
+	pdsh -w $$(tr \\n , < slaves) '/opt/hadoop/sbin/hadoop-daemon.sh stop datanode && /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
+	pdsh -w $$(tr \\n , < slaves) '/opt/hadoop/sbin/hadoop-daemon.sh start datanode && /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
