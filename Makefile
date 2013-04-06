@@ -2,6 +2,8 @@
 JDK_URL=http://download.oracle.com/otn-pub/java/jdk/6u38-b05/jdk-6u38-linux-x64.bin
 JDK_BIN=$(shell basename $(JDK_URL))
 YUM=$(shell which yum)
+APT=$(shell which apt-get)
+DFS=$(shell ls /grid/*/tmp/dfs/name/current/ 2>/dev/null | head -n 1) 
 
 $(JDK_BIN): 
 	wget -O $(JDK_BIN) -c --no-cookies --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com" $(JDK_URL) 
@@ -23,6 +25,9 @@ ifneq ($(YUM),)
 	yum -y install gcc gcc-c++ 
 	yum -y install pdsh
 	yum -y install ant
+endif
+ifneq ($(APT),)
+	apt-get install -y git gcc g++ python man cmake zlib1g-dev libssl-dev ant
 endif
 
 maven: jdk
@@ -67,13 +72,13 @@ propogate: /opt/hadoop slaves /root/.ssh/id_rsa
 	ssh-copy-id localhost;
 	for host in $$(cat slaves | grep -v localhost) ; do \
 		rsync -avP ~/.ssh/ ~/.ssh/; \
-		rsync --exclude \*.log -avP /opt/ $$host:/opt/; \
+		rsync --exclude=\*.out --exclude=\*.log -avP /opt/ $$host:/opt/; \
 		rsync -avP /usr/lib/jvm/jdk6/ $$host:/usr/lib/jvm/jdk6/; \
 		scp /etc/profile.d/java.sh $$host:/etc/profile.d/java.sh; \
 	done
 
 start: propogate
-	test -d /grid/*/tmp/dfs/name/current/ || /opt/hadoop/bin/hdfs namenode -format
+	test ! -z $(DFS) || /opt/hadoop/bin/hdfs namenode -format
 	/opt/hadoop/sbin/hadoop-daemon.sh start namenode
 	/opt/hadoop/sbin/yarn-daemon.sh start resourcemanager
 	/opt/hadoop/sbin/mr-jobhistory-daemon.sh start historyserver
