@@ -12,6 +12,7 @@ jdk: $(JDK_BIN)
 	mkdir -p /usr/lib/jvm/
 	test -d /usr/lib/jvm/jdk6 || (yes | bash -x ./$(JDK_BIN) && mv jdk1.6.0_38 /usr/lib/jvm/jdk6)
 	echo "export JAVA_HOME=/usr/lib/jvm/jdk6/"> /etc/profile.d/java.sh 
+	mkdir -p /usr/lib/jvm-exports/jdk6
 
 epel:
 ifneq ($(YUM),)
@@ -36,6 +37,11 @@ maven: jdk
 	wget -c http://apache.techartifact.com/mirror/maven/maven-3/3.0.4/binaries/apache-maven-3.0.4-bin.tar.gz
 	-- mkdir /opt/hadoop-build/
 	tar -C /opt/hadoop-build/ --strip-components=1 -xzvf apache-maven-3.0.4-bin.tar.gz
+
+ant: jdk
+	wget -c http://apache.techartifact.com/mirror//ant/binaries/apache-ant-1.9.0-bin.tar.gz
+	-- mkdir /opt/hadoop-build/
+	tar -C /opt/hadoop-build/ --strip-components=1 -xzvf apache-ant-1.9.0-bin.tar.gz
 
 protobuf: git 
 	wget -c http://protobuf.googlecode.com/files/protobuf-2.4.1.tar.bz2
