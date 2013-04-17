@@ -673,7 +673,12 @@ mapred = """<?xml version="1.0"?>
 
 <property>
   <name>mapred.child.java.opts</name>
-  <value>-Xmx512m<!--yourkit:-agentpath:/opt/yourkit/bin/linux-x86-64/libyjpagent.so=dir=/grid/0/yjp,filters=/dev/null,tracing,disablej2ee--></value> 
+  <value>-Xmx1024m<!--yourkit:-agentpath:/opt/yourkit/bin/linux-x86-64/libyjpagent.so=dir=/grid/0/yjp,filters=/dev/null,tracing,disablej2ee--></value> 
+</property>
+
+<property>
+  <name>mapreduce.job.counters.limit</name>
+  <value>1024</value>
 </property>
 
 </configuration>
