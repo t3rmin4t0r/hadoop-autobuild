@@ -25,6 +25,8 @@ ifneq ($(YUM),)
 	yum -y install gcc gcc-c++ 
 	yum -y install pdsh
 	yum -y install ant
+	yum -y install cmake
+	yum -y install zlib-devel openssl-devel 
 endif
 ifneq ($(APT),)
 	apt-get install -y git gcc g++ python man cmake zlib1g-dev libssl-dev ant
