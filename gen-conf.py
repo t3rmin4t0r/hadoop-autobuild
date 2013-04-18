@@ -1,5 +1,5 @@
 import socket
-hostname = socket.gethostname()
+hostname = socket.getfqdn()
 from glob import glob
 
 namenode = hostname
@@ -142,7 +142,7 @@ hdfs = """<?xml version="1.0"?>
 
 <property>
   <name>dfs.block.local-path-access.user</name>
-  <value>root,hdfs</value>
+  <value>root</value>
 </property>
 
 <property>
