@@ -34,9 +34,9 @@ ifneq ($(APT),)
 endif
 
 maven: jdk
-	wget -c http://apache.techartifact.com/mirror/maven/maven-3/3.0.4/binaries/apache-maven-3.0.4-bin.tar.gz
+	wget -c http://www.us.apache.org/dist/maven/maven-3/3.0.5/binaries/apache-maven-3.0.5-bin.tar.gz
 	-- mkdir /opt/hadoop-build/
-	tar -C /opt/hadoop-build/ --strip-components=1 -xzvf apache-maven-3.0.4-bin.tar.gz
+	tar -C /opt/hadoop-build/ --strip-components=1 -xzvf apache-maven-3.0.5-bin.tar.gz
 
 ant: jdk
 	wget -c http://apache.techartifact.com/mirror//ant/binaries/apache-ant-1.9.0-bin.tar.gz
