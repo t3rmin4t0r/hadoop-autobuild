@@ -42,6 +42,7 @@ ant: jdk
 	wget -c http://apache.techartifact.com/mirror//ant/binaries/apache-ant-1.9.0-bin.tar.gz
 	-- mkdir /opt/hadoop-build/
 	tar -C /opt/hadoop-build/ --strip-components=1 -xzvf apache-ant-1.9.0-bin.tar.gz
+	-- yum -y remove ant
 
 protobuf: git 
 	wget -c http://protobuf.googlecode.com/files/protobuf-2.4.1.tar.bz2
