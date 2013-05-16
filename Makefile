@@ -10,7 +10,7 @@ $(JDK_BIN):
 
 jdk: $(JDK_BIN)
 	mkdir -p /usr/lib/jvm/
-	test -d /usr/lib/jvm/jdk6 || (yes | bash -x ./$(JDK_BIN) && mv jdk1.6.0_38 /usr/lib/jvm/jdk6)
+	test -d /usr/lib/jvm/jdk6 || (yes | bash -x ./$(JDK_BIN) -noregister && mv jdk1.6.0_38 /usr/lib/jvm/jdk6)
 	echo "export JAVA_HOME=/usr/lib/jvm/jdk6/"> /etc/profile.d/java.sh 
 	mkdir -p /usr/lib/jvm-exports/jdk6
 
@@ -39,9 +39,9 @@ maven: jdk
 	tar -C /opt/hadoop-build/ --strip-components=1 -xzvf apache-maven-3.0.5-bin.tar.gz
 
 ant: jdk
-	wget -c http://apache.techartifact.com/mirror//ant/binaries/apache-ant-1.9.0-bin.tar.gz
-	-- mkdir /opt/hadoop-build/
-	tar -C /opt/hadoop-build/ --strip-components=1 -xzvf apache-ant-1.9.0-bin.tar.gz
+	wget -c http://psg.mtu.edu/pub/apache//ant/binaries/apache-ant-1.9.0-bin.tar.gz 
+	-- mkdir /opt/ant/
+	tar -C /opt/ant/ --strip-components=1 -xzvf apache-ant-1.9.0-bin.tar.gz
 	-- yum -y remove ant
 
 protobuf: git 
