@@ -52,10 +52,11 @@ ant: jdk
 protobuf: git 
 	wget -c http://protobuf.googlecode.com/files/protobuf-2.4.1.tar.bz2
 	tar -xvf protobuf-2.4.1.tar.bz2
-	export PATH=$$PATH:/usr/bin/; cd protobuf-2.4.1; \
+	test -f /opt/hadoop-build/bin/protoc || \
+	(/opt/hadoop-build/ export PATH=$$PATH:/usr/bin/; cd protobuf-2.4.1; \
 	./configure --prefix=/opt/hadoop-build/; \
 	make -j4; \
-	make install
+	make install)
 
 hadoop: git maven protobuf
 	test -d hadoop || git clone git://git.apache.org/hadoop-common.git hadoop 
