@@ -4,6 +4,7 @@ from glob import glob
 
 namenode = hostname
 resourcemanager = hostname
+total_megs=8192
 
 volumes = glob("/grid/[0-9]*/")
 
@@ -205,6 +206,11 @@ hdfs = """<?xml version="1.0"?>
   <name>dfs.block.access.token.enable</name>
   <value>false</value>
   <final>true</final>
+</property>
+
+<property>
+  <name>dfs.domain.socket.path</name>
+	<value>/var/run/hdfs.sock</value>
 </property>
 
 
@@ -433,8 +439,18 @@ yarn = """<?xml version="1.0"?>
 	<value>3600000</value>
 </property>
 
+<property>
+	<name>yarn.nodemanager.sleep-delay-before-sigkill.ms</name>
+	<value>3600000</value>
+</property>
+
+<property>
+	<name>yarn.nodemanager.resource.memory-mb</name>
+	<value>%(total_megs)d</value>
+</property>
+
 </configuration>
-""" % {'resourcemanager' : resourcemanager, 'hadoop_tmp':distribute('tmp'), 'hadoop_nm_local':distribute('tmp/nm-local'), 'hadoop_nm_log':distribute('tmp/nm-logs')}
+""" % {'resourcemanager' : resourcemanager, 'hadoop_tmp':distribute('tmp'), 'hadoop_nm_local':distribute('tmp/nm-local'), 'hadoop_nm_log':distribute('tmp/nm-logs'), 'total_megs': total_megs}
 
 mapred = """<?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
