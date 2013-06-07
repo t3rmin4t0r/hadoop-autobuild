@@ -1,6 +1,12 @@
 
-JDK_URL=http://download.oracle.com/otn-pub/java/jdk/6u38-b05/jdk-6u38-linux-x64.bin
-JDK_BIN=$(shell basename $(JDK_URL))
+ARCH=$(shell uname -p)
+ifeq ($(ARCH), x86_64)
+	JDK_URL=http://download.oracle.com/otn-pub/java/jdk/6u38-b05/jdk-6u38-linux-x64.bin
+	JDK_BIN=$(shell basename $(JDK_URL))
+else
+	JDK_URL=http://download.oracle.com/otn-pub/java/jdk/6u38-b05/jdk-6u38-linux-i586.bin
+	JDK_BIN=$(shell basename $(JDK_URL))
+endif
 YUM=$(shell which yum)
 APT=$(shell which apt-get)
 DFS=$(shell ls /grid/*/tmp/dfs/name/current/ 2>/dev/null | head -n 1) 
