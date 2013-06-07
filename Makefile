@@ -31,7 +31,6 @@ ifneq ($(YUM),)
 	yum -y install git-core 
 	yum -y install gcc gcc-c++ 
 	yum -y install pdsh
-	yum -y install ant
 	yum -y install cmake
 	yum -y install zlib-devel openssl-devel 
 endif
