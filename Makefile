@@ -35,7 +35,7 @@ ifneq ($(YUM),)
 	yum -y install zlib-devel openssl-devel 
 endif
 ifneq ($(APT),)
-	apt-get install -y git gcc g++ python man cmake zlib1g-dev libssl-dev ant
+	apt-get install -y git gcc g++ python man cmake zlib1g-dev libssl-dev ant pdsh
 endif
 
 maven: jdk
@@ -93,17 +93,18 @@ propogate: /opt/hadoop slaves /root/.ssh/id_rsa
 	done
 
 start: propogate
+	test -d /grid/0 || mkdir -p /grid/0
 	test ! -z $(DFS) || /opt/hadoop/bin/hdfs namenode -format
 	/opt/hadoop/sbin/hadoop-daemon.sh start namenode
 	/opt/hadoop/sbin/yarn-daemon.sh start resourcemanager
 	/opt/hadoop/sbin/mr-jobhistory-daemon.sh start historyserver
-	pdsh -w $$(tr \\n , < slaves) '/opt/hadoop/sbin/hadoop-daemon.sh start datanode && /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
+	pdsh -R ssh -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh start datanode && /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
 
 stop:
 	/opt/hadoop/sbin/hadoop-daemon.sh stop namenode
 	/opt/hadoop/sbin/yarn-daemon.sh stop resourcemanager
 	/opt/hadoop/sbin/mr-jobhistory-daemon.sh stop historyserver
-	pdsh -w $$(tr \\n , < slaves) '/opt/hadoop/sbin/hadoop-daemon.sh stop datanode && /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
+	pdsh -R ssh -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh stop datanode && /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
 	
 
 rm-restart:
@@ -111,9 +112,9 @@ rm-restart:
 	/opt/hadoop/sbin/yarn-daemon.sh start resourcemanager
 
 nm-restart:
-	pdsh -w $$(tr \\n , < slaves) '/opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
-	pdsh -w $$(tr \\n , < slaves) '/opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
+	pdsh -R ssh -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
+	pdsh -R ssh -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
 
 restart-slaves:
-	pdsh -w $$(tr \\n , < slaves) '/opt/hadoop/sbin/hadoop-daemon.sh stop datanode && /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
-	pdsh -w $$(tr \\n , < slaves) '/opt/hadoop/sbin/hadoop-daemon.sh start datanode && /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
+	pdsh -R ssh -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh stop datanode && /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
+	pdsh -R ssh -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh start datanode && /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
