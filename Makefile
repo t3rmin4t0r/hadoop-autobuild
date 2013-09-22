@@ -1,3 +1,5 @@
+VERSION=branch-2.1-beta
+PROTOC_VERSION=2.5.0
 
 ARCH=$(shell uname -p)
 ifeq ($(ARCH), x86_64)
@@ -9,6 +11,7 @@ else
 endif
 YUM=$(shell which yum)
 APT=$(shell which apt-get)
+PDSH=pdsh -R ssh
 DFS=$(shell ls /grid/*/tmp/dfs/name/current/ 2>/dev/null | head -n 1) 
 
 $(JDK_BIN): 
@@ -35,7 +38,7 @@ ifneq ($(YUM),)
 	yum -y install zlib-devel openssl-devel 
 endif
 ifneq ($(APT),)
-	apt-get install -y git gcc g++ python man cmake zlib1g-dev libssl-dev ant pdsh
+	apt-get install -y git gcc g++ python man cmake zlib1g-dev libssl-dev pdsh
 endif
 
 maven: jdk
@@ -44,26 +47,26 @@ maven: jdk
 	tar -C /opt/hadoop-build/ --strip-components=1 -xzvf apache-maven-3.0.5-bin.tar.gz
 
 ant: jdk
-	wget -c http://archive.apache.org/dist/ant/binaries/apache-ant-1.9.1-bin.tar.gz
+	wget -c http://psg.mtu.edu/pub/apache//ant/binaries/apache-ant-1.9.0-bin.tar.gz 
 	-- mkdir /opt/ant/
 	tar -C /opt/ant/ --strip-components=1 -xzvf apache-ant-1.9.0-bin.tar.gz
 	-- yum -y remove ant
 
 protobuf: git 
-	wget -c http://protobuf.googlecode.com/files/protobuf-2.4.1.tar.bz2
-	tar -xvf protobuf-2.4.1.tar.bz2
+	wget -c http://protobuf.googlecode.com/files/protobuf-$(PROTOC_VERSION).tar.bz2
+	tar -xvf protobuf-$(PROTOC_VERSION).tar.bz2
 	test -f /opt/hadoop-build/bin/protoc || \
-	(/opt/hadoop-build/ export PATH=$$PATH:/usr/bin/; cd protobuf-2.4.1; \
+	(/opt/hadoop-build/ export PATH=$$PATH:/usr/bin/; cd protobuf-$(PROTOC_VERSION); \
 	./configure --prefix=/opt/hadoop-build/; \
 	make -j4; \
 	make install)
 
 hadoop: git maven protobuf
 	test -d hadoop || git clone git://git.apache.org/hadoop-common.git hadoop 
-	cd hadoop; git pull --rebase
+	-- cd hadoop; git pull --rebase
 	export PATH=$$PATH:/opt/hadoop-build/bin/; \
-	cd hadoop/; git branch branch-2 --track origin/branch-2; \
-	git checkout branch-2; \
+	cd hadoop/; git branch $(VERSION) --track origin/$(VERSION); \
+	git checkout $(VERSION); \
 	. /etc/profile; \
 	mvn package -Pnative -Pdist -DskipTests;
 
@@ -93,18 +96,17 @@ propogate: /opt/hadoop slaves /root/.ssh/id_rsa
 	done
 
 start: propogate
-	test -d /grid/0 || mkdir -p /grid/0
 	test ! -z $(DFS) || /opt/hadoop/bin/hdfs namenode -format
 	/opt/hadoop/sbin/hadoop-daemon.sh start namenode
 	/opt/hadoop/sbin/yarn-daemon.sh start resourcemanager
 	/opt/hadoop/sbin/mr-jobhistory-daemon.sh start historyserver
-	pdsh -R ssh -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh start datanode && /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
+	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh start datanode && /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
 
 stop:
 	/opt/hadoop/sbin/hadoop-daemon.sh stop namenode
 	/opt/hadoop/sbin/yarn-daemon.sh stop resourcemanager
 	/opt/hadoop/sbin/mr-jobhistory-daemon.sh stop historyserver
-	pdsh -R ssh -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh stop datanode && /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
+	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh stop datanode && /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
 	
 
 rm-restart:
@@ -112,9 +114,9 @@ rm-restart:
 	/opt/hadoop/sbin/yarn-daemon.sh start resourcemanager
 
 nm-restart:
-	pdsh -R ssh -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
-	pdsh -R ssh -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
+	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
+	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
 
 restart-slaves:
-	pdsh -R ssh -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh stop datanode && /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
-	pdsh -R ssh -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh start datanode && /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
+	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh stop datanode && /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
+	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh start datanode && /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
