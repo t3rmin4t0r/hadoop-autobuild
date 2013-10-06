@@ -244,7 +244,7 @@ yarn = """<?xml version="1.0"?>
 
   <property>
     <name>yarn.nodemanager.aux-services</name>
-    <value>mapreduce.shuffle</value>
+    <value>mapreduce_shuffle</value>
   </property>
 
   <property>
