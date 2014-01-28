@@ -1,12 +1,12 @@
-VERSION=branch-2.1-beta
+VERSION=branch-2
 PROTOC_VERSION=2.5.0
 
 ARCH=$(shell uname -p)
 ifeq ($(ARCH), x86_64)
-	JDK_URL=http://download.oracle.com/otn-pub/java/jdk/6u38-b05/jdk-6u38-linux-x64.bin
+	JDK_URL=http://download.oracle.com/otn-pub/java/jdk/7u51-b13/jdk-7u51-linux-x64.tar.gz
 	JDK_BIN=$(shell basename $(JDK_URL))
 else
-	JDK_URL=http://download.oracle.com/otn-pub/java/jdk/6u38-b05/jdk-6u38-linux-i586.bin
+	JDK_URL=http://download.oracle.com/otn-pub/java/jdk/7u51-b13/jdk-7u51-linux-i586.tar.gz
 	JDK_BIN=$(shell basename $(JDK_URL))
 endif
 YUM=$(shell which yum)
@@ -19,9 +19,9 @@ $(JDK_BIN):
 
 jdk: $(JDK_BIN)
 	mkdir -p /usr/lib/jvm/
-	test -d /usr/lib/jvm/jdk6 || (yes | bash -x ./$(JDK_BIN) -noregister && mv jdk1.6.0_38 /usr/lib/jvm/jdk6)
-	echo "export JAVA_HOME=/usr/lib/jvm/jdk6/"> /etc/profile.d/java.sh 
-	mkdir -p /usr/lib/jvm-exports/jdk6
+	test -d /usr/lib/jvm/jdk7 || (yes | tar -xzvf $(JDK_BIN) && mv jdk1.7.0_51 /usr/lib/jvm/jdk7)
+	echo "export JAVA_HOME=/usr/lib/jvm/jdk7/"> /etc/profile.d/java.sh 
+	mkdir -p /usr/lib/jvm-exports/jdk7
 
 epel:
 ifneq ($(YUM),)
