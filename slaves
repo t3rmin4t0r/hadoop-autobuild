@@ -1,1 +1,5 @@
-localhost
+hdpbench-slave0
+hdpbench-slave1
+hdpbench-slave2
+hdpbench-slave3
+hdpbench-slave4

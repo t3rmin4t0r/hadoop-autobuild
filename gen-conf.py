@@ -2,9 +2,10 @@ import socket
 hostname = socket.getfqdn()
 from glob import glob
 
+hostname = "hdpbench-master"
 namenode = hostname
 resourcemanager = hostname
-total_megs=8192
+total_megs=40960
 
 volumes = glob("/grid/[0-9]*/")
 
@@ -136,6 +137,7 @@ hdfs = """<?xml version="1.0"?>
 
 <configuration>
 
+
 <property>
   <name>dfs.client.read.shortcircuit</name>
   <value>true</value>
@@ -212,6 +214,16 @@ hdfs = """<?xml version="1.0"?>
   <name>dfs.domain.socket.path</name>
 	<value>/var/run/hdfs.sock</value>
 </property>
+
+<property>
+  <name>dfs.datanode.max.locked.memory</name>
+  <value>12884901888</value>
+</property>
+
+ <property>
+  <name>dfs.namenode.caching.enabled</name>
+  <value>true</value>
+ </property>
 
 
 </configuration>
@@ -624,10 +636,9 @@ mapred = """<?xml version="1.0"?>
   </description>
 </property>
 
-<!--
 <property>
 <name>mapred.cluster.map.memory.mb</name>
-<value>1024</value>
+<value>2048</value>
 </property>
 
 <property>
@@ -638,25 +649,25 @@ mapred = """<?xml version="1.0"?>
 
 <property>
 <name>mapred.job.map.memory.mb</name>
-<value>1024</value>
+<value>4096</value>
 </property>
 
 <property>
 <name>mapred.job.reduce.memory.mb</name>
-<value>2048</value>
+<value>4096</value>
 </property>
 
 
 <property>
 <name>mapred.cluster.max.map.memory.mb</name>
-<value>2048</value>
+<value>24576</value>
 </property>
 
 <property>
 <name>mapred.cluster.max.reduce.memory.mb</name>
-<value>4096</value>
+<value>24576</value>
 </property>
--->
+
 <property>
 <name>mapreduce.cluster.map.userlog.retain-size</name>
 <value>1024</value>
@@ -689,7 +700,7 @@ mapred = """<?xml version="1.0"?>
 
 <property>
   <name>mapred.child.java.opts</name>
-  <value>-Xmx1024m<!--yourkit:-agentpath:/opt/yourkit/bin/linux-x86-64/libyjpagent.so=dir=/grid/0/yjp,filters=/dev/null,tracing,disablej2ee--></value> 
+  <value>-Xmx3200m -XX:+UseParallelGC<!--yourkit:-agentpath:/opt/yourkit/bin/linux-x86-64/libyjpagent.so=dir=/grid/0/yjp,filters=/dev/null,tracing,disablej2ee--></value> 
 </property>
 
 <property>

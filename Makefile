@@ -1,27 +1,33 @@
-VERSION=branch-2.1-beta
+VERSION=branch-2.3
 PROTOC_VERSION=2.5.0
+JDK_BASE_DIR=/usr/lib/jvm/jdk7/
+JDK_VERSION=jdk1.7.0_51
+INSTALL_ROOT=/grid/0/opt/
 
 ARCH=$(shell uname -p)
-ifeq ($(ARCH), x86_64)
-	JDK_URL=http://download.oracle.com/otn-pub/java/jdk/6u38-b05/jdk-6u38-linux-x64.bin
-	JDK_BIN=$(shell basename $(JDK_URL))
-else
-	JDK_URL=http://download.oracle.com/otn-pub/java/jdk/6u38-b05/jdk-6u38-linux-i586.bin
-	JDK_BIN=$(shell basename $(JDK_URL))
-endif
 YUM=$(shell which yum)
 APT=$(shell which apt-get)
 PDSH=pdsh -R ssh
 DFS=$(shell ls /grid/*/tmp/dfs/name/current/ 2>/dev/null | head -n 1) 
 
-$(JDK_BIN): 
-	wget --no-check-certificate -O $(JDK_BIN) -c --no-cookies --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com" $(JDK_URL) 
+ifeq ($(ARCH), x86_64)
+        JDK_URL=http://download.oracle.com/otn-pub/java/jdk/7u51-b13/jdk-7u51-linux-x64.tar.gz
+        JDK_BIN=$(shell basename $(JDK_URL))
+else
+        JDK_URL=http://download.oracle.com/otn-pub/java/jdk/7u51-b13/jdk-7u51-linux-i586.tar.gz
+        JDK_BIN=$(shell basename $(JDK_URL))
+endif
+
+$(JDK_BIN):
+	wget --no-check-certificate -O $(JDK_BIN) -c --no-cookies --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com" $(JDK_URL)
+	echo "export JAVA_HOME=/usr/lib/jvm/jdk7/"> /etc/profile.d/java.sh
+	ln -s /usr/lib/jvm/jdk7/ /usr/lib/jvm-exports/jdk7
 
 jdk: $(JDK_BIN)
 	mkdir -p /usr/lib/jvm/
-	test -d /usr/lib/jvm/jdk6 || (yes | bash -x ./$(JDK_BIN) -noregister && mv jdk1.6.0_38 /usr/lib/jvm/jdk6)
-	echo "export JAVA_HOME=/usr/lib/jvm/jdk6/"> /etc/profile.d/java.sh 
-	mkdir -p /usr/lib/jvm-exports/jdk6
+	test -d $(JDK_BASE_DIR) || (tar -zxf $(JDK_BIN) && mv $(JDK_VERSION) $(JDK_BASE_DIR))
+	echo "export JAVA_HOME=$(JDK_BASE_DIR)"> /etc/profile.d/java.sh
+	mkdir -p /usr/lib/jvm-exports/jdk7
 
 epel:
 ifneq ($(YUM),)
@@ -68,16 +74,16 @@ hadoop: git maven protobuf
 	cd hadoop/; git branch $(VERSION) --track origin/$(VERSION); \
 	git checkout $(VERSION); \
 	. /etc/profile; \
-	mvn package -Pnative -Pdist -DskipTests;
+	mvn package -Pnative -Pdist -DskipTests -Dmaven.javadoc.skip=true;
 
 
 hadoop/hadoop-dist/target/: 
 	make hadoop
 
 install: hadoop/hadoop-dist/target/
-	rsync -avP hadoop/hadoop-dist/target/hadoop-2*/ /opt/hadoop/
-	cp slaves gen-conf.py /opt/hadoop/etc/hadoop/
-	cd /opt/hadoop/etc/hadoop/; python gen-conf.py
+	rsync -avP hadoop/hadoop-dist/target/hadoop-2*/ $(INSTALL_ROOT)/hadoop/
+	cp slaves gen-conf.py $(INSTALL_ROOT)/hadoop/etc/hadoop/
+	cd $(INSTALL_ROOT)/hadoop/etc/hadoop/; python gen-conf.py
 
 /opt/hadoop: install
 
@@ -86,37 +92,38 @@ install: hadoop/hadoop-dist/target/
 	echo "StrictHostKeyChecking=no" >> ~/.ssh/config
 
 propogate: /opt/hadoop slaves /root/.ssh/id_rsa
-	cp slaves /opt/hadoop/etc/hadoop/;
+	cp slaves $(INSTALL_ROOT)/hadoop/etc/hadoop/;
 	ssh-copy-id localhost;
 	for host in $$(cat slaves | grep -v localhost) ; do \
 		rsync -avP ~/.ssh/ ~/.ssh/; \
-		rsync --exclude=\*.out --exclude=\*.log -avP /opt/ $$host:/opt/; \
-		rsync -avP /usr/lib/jvm/jdk6/ $$host:/usr/lib/jvm/jdk6/; \
+		rsync --exclude=\*.out --exclude=\*.log -avP $(INSTALL_ROOT)/ $$host:$(INSTALL_ROOT); \
+		rsync -avP $(JDK_BASE_DIR) $$host:$(JDK_BASE_DIR)/; \
 		scp /etc/profile.d/java.sh $$host:/etc/profile.d/java.sh; \
 	done
 
-start: propogate
-	test ! -z $(DFS) || /opt/hadoop/bin/hdfs namenode -format
-	/opt/hadoop/sbin/hadoop-daemon.sh start namenode
-	/opt/hadoop/sbin/yarn-daemon.sh start resourcemanager
-	/opt/hadoop/sbin/mr-jobhistory-daemon.sh start historyserver
-	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh start datanode && /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
+#start: propogate
+start: 
+	test ! -z $(DFS) || $(INSTALL_ROOT)/hadoop/bin/hdfs namenode -format
+	$(INSTALL_ROOT)/hadoop/sbin/hadoop-daemon.sh start namenode
+	$(INSTALL_ROOT)/hadoop/sbin/yarn-daemon.sh start resourcemanager
+	$(INSTALL_ROOT)/hadoop/sbin/mr-jobhistory-daemon.sh start historyserver
+	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; $(INSTALL_ROOT)/hadoop/sbin/hadoop-daemon.sh start datanode && $(INSTALL_ROOT)/hadoop/sbin/yarn-daemon.sh start nodemanager'
 
 stop:
-	/opt/hadoop/sbin/hadoop-daemon.sh stop namenode
-	/opt/hadoop/sbin/yarn-daemon.sh stop resourcemanager
-	/opt/hadoop/sbin/mr-jobhistory-daemon.sh stop historyserver
-	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh stop datanode && /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
+	$(INSTALL_ROOT)/hadoop/sbin/hadoop-daemon.sh stop namenode
+	$(INSTALL_ROOT)/hadoop/sbin/yarn-daemon.sh stop resourcemanager
+	$(INSTALL_ROOT)/hadoop/sbin/mr-jobhistory-daemon.sh stop historyserver
+	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; $(INSTALL_ROOT)/hadoop/sbin/hadoop-daemon.sh stop datanode && $(INSTALL_ROOT)/hadoop/sbin/yarn-daemon.sh stop nodemanager'
 	
 
 rm-restart:
-	/opt/hadoop/sbin/yarn-daemon.sh stop resourcemanager
-	/opt/hadoop/sbin/yarn-daemon.sh start resourcemanager
+	$(INSTALL_ROOT)/hadoop/sbin/yarn-daemon.sh stop resourcemanager
+	$(INSTALL_ROOT)/hadoop/sbin/yarn-daemon.sh start resourcemanager
 
 nm-restart:
-	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
-	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
+	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; $(INSTALL_ROOT)/hadoop/sbin/yarn-daemon.sh stop nodemanager'
+	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; $(INSTALL_ROOT)/hadoop/sbin/yarn-daemon.sh start nodemanager'
 
 restart-slaves:
-	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh stop datanode && /opt/hadoop/sbin/yarn-daemon.sh stop nodemanager'
-	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; /opt/hadoop/sbin/hadoop-daemon.sh start datanode && /opt/hadoop/sbin/yarn-daemon.sh start nodemanager'
+	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; $(INSTALL_ROOT)/hadoop/sbin/hadoop-daemon.sh stop datanode && $(INSTALL_ROOT)/hadoop/sbin/yarn-daemon.sh stop nodemanager'
+	$(PDSH) -w $$(tr \\n , < slaves) 'source /etc/profile; $(INSTALL_ROOT)/hadoop/sbin/hadoop-daemon.sh start datanode && $(INSTALL_ROOT)/hadoop/sbin/yarn-daemon.sh start nodemanager'
