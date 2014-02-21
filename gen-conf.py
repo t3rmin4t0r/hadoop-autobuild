@@ -222,7 +222,7 @@ hdfs = """<?xml version="1.0"?>
 
  <property>
   <name>dfs.namenode.caching.enabled</name>
-  <value>true</value>
+  <value>false</value>
  </property>
 
 
