@@ -449,6 +449,11 @@ yarn = """<?xml version="1.0"?>
 	<value>%(total_megs)d</value>
 </property>
 
+<property>
+	<name>yarn.nodemanager.delete.debug-delay-sec</name>
+	<value>10000000</value>
+</property>
+
 </configuration>
 """ % {'resourcemanager' : resourcemanager, 'hadoop_tmp':distribute('tmp'), 'hadoop_nm_local':distribute('tmp/nm-local'), 'hadoop_nm_log':distribute('tmp/nm-logs'), 'total_megs': total_megs}
 
@@ -624,29 +629,17 @@ mapred = """<?xml version="1.0"?>
   </description>
 </property>
 
-<!--
 <property>
 <name>mapred.cluster.map.memory.mb</name>
-<value>1024</value>
+<value>512</value>
 </property>
 
 <property>
 <name>mapred.cluster.reduce.memory.mb</name>
-<value>2048</value>
+<value>512</value>
 </property>
 
-
-<property>
-<name>mapred.job.map.memory.mb</name>
-<value>1024</value>
-</property>
-
-<property>
-<name>mapred.job.reduce.memory.mb</name>
-<value>2048</value>
-</property>
-
-
+<!--
 <property>
 <name>mapred.cluster.max.map.memory.mb</name>
 <value>2048</value>
@@ -689,7 +682,7 @@ mapred = """<?xml version="1.0"?>
 
 <property>
   <name>mapred.child.java.opts</name>
-  <value>-Xmx1024m<!--yourkit:-agentpath:/opt/yourkit/bin/linux-x86-64/libyjpagent.so=dir=/grid/0/yjp,filters=/dev/null,tracing,disablej2ee--></value> 
+  <value>-Xmx400m<!--yourkit:-agentpath:/opt/yourkit/bin/linux-x86-64/libyjpagent.so=dir=/grid/0/yjp,filters=/dev/null,tracing,disablej2ee--></value> 
 </property>
 
 <property>
