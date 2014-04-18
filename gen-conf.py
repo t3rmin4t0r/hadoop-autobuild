@@ -639,6 +639,16 @@ mapred = """<?xml version="1.0"?>
 <value>512</value>
 </property>
 
+<property>
+<name>mapreduce.map.memory.mb</name>
+<value>512</value>
+</property>
+
+<property>
+<name>mapreduce.reduce.memory.mb</name>
+<value>512</value>
+</property>
+
 <!--
 <property>
 <name>mapred.cluster.max.map.memory.mb</name>
@@ -686,8 +696,18 @@ mapred = """<?xml version="1.0"?>
 </property>
 
 <property>
+  <name>mapreduce.map.java.opts</name>
+  <value>-Xmx400m</value> 
+</property>
+
+<property>
+  <name>mapreduce.reduce.java.opts</name>
+  <value>-Xmx400m</value> 
+</property>
+
+<property>
   <name>mapreduce.job.counters.limit</name>
-  <value>1024</value>
+  <value>8192</value>
 </property>
 
 </configuration>
